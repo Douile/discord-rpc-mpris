@@ -1,6 +1,6 @@
 # Discord RPC - MPRIS
 
-![Example](img/example.png)
+<p align="center"><img alt="Example image" src="img/example.png"></p>
 
 > A Discord Rich Presence client that connects to MPRIS music players
 
