@@ -35,6 +35,7 @@ def setup_player(name):
     player.connect('playback-status::playing', on_play, manager)
     player.connect('playback-status::paused', on_pause, manager)
     player.connect('metadata', on_metadata, manager)
+    player.connect('seeked', on_seeked, manager)
     manager.manage_player(player)
     update(player)
 
@@ -43,13 +44,23 @@ def get_song(player):
 
 def update(player):
     status = player.get_property('status')
-
     try:
         if status == "":
             RPC.clear()
         elif status == "Playing":
-            song = get_song(player)
-            RPC.update(state='Playing', details=song, large_image='music', large_text=song, small_image='play')
+            now = time.time()*1000                              # Get current timestamp (s)
+            pos = player.get_position()/1000                    # Get position (us)
+            # Get length of song (us)
+            length = int(player.print_metadata_prop('mpris:length'))/1000
+            RPC.update(
+                details=player.get_title(),
+                state=player.get_artist(),
+                large_image='music',
+                large_text=get_song(player),
+                small_image='play',
+                start=now-pos,
+                end=now+length-pos,
+            )
         elif status == "Paused":
             RPC.update(state='Paused', large_image='music', small_image='pause')
     except pypresence.exceptions.InvalidID:
@@ -63,6 +74,9 @@ def on_pause(player, status, manager):
     update(player)
 
 def on_metadata(player, metadata, manager):
+    update(player)
+
+def on_seeked(player, pos, manager):
     update(player)
 
 def on_player_add(manager, name):
