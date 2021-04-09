@@ -95,13 +95,18 @@ def on_player_remove(manager, player):
     else:
         update(manager.props.players[0])
 
-manager.connect('name-appeared', on_player_add)
-manager.connect('player-vanished', on_player_remove)
+def start():
+    manager.connect('name-appeared', on_player_add)
+    manager.connect('player-vanished', on_player_remove)
 
-# Start program, connect to Discord, setup existing players & hook into GLib's main loop
-connect_rpc()
+    # Start program, connect to Discord, setup existing players & hook into GLib's main loop
+    connect_rpc()
 
-for name in manager.props.player_names:
-    setup_player(name)
+    for name in manager.props.player_names:
+        setup_player(name)
 
-GLib.MainLoop().run()
+    GLib.MainLoop().run()
+
+if __name__ == '__main__':
+    start()
+
