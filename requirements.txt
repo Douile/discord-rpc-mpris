@@ -1,4 +1,4 @@
-dbus-python==1.2.16
-pycairo==1.19.1
-PyGObject==3.36.1
-pypresence==4.0.0
+dbus-python
+pycairo
+pypresence
+#PyGObject
