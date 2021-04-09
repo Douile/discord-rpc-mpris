@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 A simple Discord Rich Presence client that connects to MPRIS and shows your current song.
 """
