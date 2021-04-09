@@ -10,6 +10,7 @@ gi.require_version('Playerctl', '2.0')
 
 from gi.repository import Playerctl, GLib
 from pypresence import Presence
+import pypresence.exceptions
 
 manager = Playerctl.PlayerManager()
 
