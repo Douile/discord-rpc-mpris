@@ -43,7 +43,7 @@ def get_song(player):
     return "%s - %s" % (player.get_title(), player.get_artist())
 
 def get_buttons(player):
-    track_id = player.print_metadata_prop("mpris:trackid")
+    track_id = str(player.print_metadata_prop("mpris:trackid"))
     if track_id.startswith("spotify:track:"):
         return [{
                 "label": "Listen on spotify",
