@@ -56,27 +56,30 @@ def get_buttons(player):
             }]
     return None
 
+def get_timestamps(player):
+    now = time.time()*1000                  # Get current timestamp (s)
+    # Get length of song (us)
+    try:
+        length = int(player.print_metadata_prop('mpris:length'))/1000
+    except TypeError as e:
+        length = None
+    try:
+        pos = player.get_position()/1000    # Get position (us)
+    except gi.repository.GLib.Error as e:
+        pos = None
+    if pos is not None and length is not None:
+        start = now-pos
+        return (start, start+length)
+    return (None, None)
+
+
 def update(player):
     status = player.get_property('status')
     try:
         if status == "":
             RPC.clear()
         elif status == "Playing":
-            now = time.time()*1000                  # Get current timestamp (s)
-            # Get length of song (us)
-            try:
-                length = int(player.print_metadata_prop('mpris:length'))/1000
-            except TypeError as e:
-                length = None
-            try:
-                pos = player.get_position()/1000    # Get position (us)
-            except gi.repository.GLib.Error as e:
-                pos = None
-            start = None
-            end = None
-            if pos is not None and length is not None:
-                start = now-pos
-                end = now+length-pos
+            start, end = get_timestamps(player)
             RPC.update(
                 details=player.get_title(),
                 state=player.get_artist(),
