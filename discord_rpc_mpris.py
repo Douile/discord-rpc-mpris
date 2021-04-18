@@ -62,18 +62,30 @@ def update(player):
         if status == "":
             RPC.clear()
         elif status == "Playing":
-            now = time.time()*1000                              # Get current timestamp (s)
-            pos = player.get_position()/1000                    # Get position (us)
+            now = time.time()*1000                  # Get current timestamp (s)
             # Get length of song (us)
-            length = int(player.print_metadata_prop('mpris:length'))/1000
+            try:
+                length = int(player.print_metadata_prop('mpris:length'))/1000
+            except TypeError as e:
+                length = None
+            try:
+                pos = player.get_position()/1000    # Get position (us)
+            except gi.repository.GLib.Error as e:
+                pos = None
+            start = None
+            end = None
+            if pos is not None and length is not None:
+                start = now-pos
+                end = now+length-pos
             RPC.update(
                 details=player.get_title(),
                 state=player.get_artist(),
                 large_image='music',
                 large_text=get_song(player),
                 small_image='play',
-                start=now-pos,
-                end=now+length-pos,
+                start=start,
+                end=end,
+                buttons=generate_buttons(player),
             )
         elif status == "Paused":
             RPC.update(state='Paused', large_image='music', small_image='pause')
