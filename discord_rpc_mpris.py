@@ -42,7 +42,7 @@ def setup_player(name):
 def get_song(player):
     return "%s - %s" % (player.get_title(), player.get_artist())
 
-def generate_buttons(player):
+def get_buttons(player):
     track_id = player.print_metadata_prop("mpris:trackid")
     if track_id.startswith("spotify:track:"):
         return [{
@@ -85,7 +85,7 @@ def update(player):
                 small_image='play',
                 start=start,
                 end=end,
-                buttons=generate_buttons(player),
+                buttons=get_buttons(player),
             )
         elif status == "Paused":
             RPC.update(state='Paused', large_image='music', small_image='pause')
