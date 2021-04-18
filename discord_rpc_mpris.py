@@ -42,6 +42,20 @@ def setup_player(name):
 def get_song(player):
     return "%s - %s" % (player.get_title(), player.get_artist())
 
+def generate_buttons(player):
+    track_id = player.print_metadata_prop("mpris:trackid")
+    if track_id.startswith("spotify:track:"):
+        return [{
+                "label": "Listen on spotify",
+                "url": "https://open.spotify.com/track/{}".format(track_id[13:]),
+            }]
+    if track_id.startswith("/dev/alextren/Spot/Track/"):
+        return [{
+                "label": "Listen on spotify",
+                "url": "https://open.spotify.co/track/{}".format(track_id[25:]),
+            }]
+    return None
+
 def update(player):
     status = player.get_property('status')
     try:
