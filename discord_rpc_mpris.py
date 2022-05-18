@@ -11,11 +11,32 @@ gi.require_version('Playerctl', '2.0')
 from gi.repository import Playerctl, GLib
 from pypresence import Presence
 import pypresence.exceptions
+import requests
 
 manager = Playerctl.PlayerManager()
+IPFS_API = "http://192.168.20.8:5001/api/v0"
 
 print("Starting RPC client...")
 RPC = Presence('440997014315204609')
+
+def get_time():
+    return time.time()*1000             # Get current timestamp (s)
+last_switch = get_time()
+last_image = None
+last_image_link = "music"
+last_track = None
+
+def upload_ipfs(file):
+    r = requests.post(IPFS_API+"/files/write?arg=/album-art.png&create=true",
+            files={"file": open(file, "rb")})
+    r.raise_for_status()
+    r = requests.post(IPFS_API+"/files/stat?arg=/album-art.png")
+    r.raise_for_status()
+    return "https://ipfs.io/ipfs/"+r.json()["Hash"]
+
+def remove_ipfs():
+    r = requests.post(IPFS_API+"/files/rm?arg=/album-art.png")
+    r.raise_for_status()
 
 def connect_rpc():
     while True:
@@ -57,7 +78,7 @@ def get_buttons(player):
     return None
 
 def get_timestamps(player):
-    now = time.time()*1000                  # Get current timestamp (s)
+    now = get_time()
     # Get length of song (us)
     try:
         length = int(player.print_metadata_prop('mpris:length'))/1000
@@ -70,8 +91,25 @@ def get_timestamps(player):
     if pos is not None and length is not None:
         start = now-pos
         return (start, start+length)
-    return (None, None)
+    global last_switch, last_track
+    cur_title = player.get_title()
+    if cur_title != last_track:
+        last_track = cur_title
+        last_switch = now
+    return (last_switch, None)
 
+def get_image(player):
+    art_url = str(player.print_metadata_prop("mpris:artUrl"))
+    if art_url.startswith("https://") or art_url.startswith("http://"):
+        return art_url
+    if art_url.startswith("file://"):
+        global last_image, last_image_url
+        if last_image == art_url:
+            return last_image_url
+        last_image_url = upload_ipfs(art_url[7:])
+        last_image = art_url
+        return last_image_url
+    return "music"
 
 def update(player):
     status = player.get_property('status')
@@ -80,10 +118,13 @@ def update(player):
             RPC.clear()
         elif status == "Playing":
             start, end = get_timestamps(player)
+            artist = player.get_artist()
+            if len(artist) == 0:
+                artist = "No artist"
             RPC.update(
                 details=player.get_title(),
-                state=player.get_artist(),
-                large_image='music',
+                state=artist,
+                large_image=get_image(player),
                 large_text=get_song(player),
                 small_image='play',
                 start=start,
@@ -137,5 +178,11 @@ def start():
     GLib.MainLoop().run()
 
 if __name__ == '__main__':
-    start()
+    try:
+        start()
+    except KeyboardInterrupt:
+        print("Shutting down...")
+        RPC.clear()
+        RPC.close()
+        remove_ipfs()
 
