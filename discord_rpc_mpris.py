@@ -5,9 +5,10 @@ A simple Discord Rich Presence client that connects to MPRIS and shows your curr
 
 import sys
 import time
+import base64
+
 import gi
 gi.require_version('Playerctl', '2.0')
-
 from gi.repository import Playerctl, GLib
 from pypresence import Presence
 import pypresence.exceptions
@@ -102,8 +103,21 @@ def get_image(player):
     art_url = str(player.print_metadata_prop("mpris:artUrl"))
     if art_url.startswith("https://") or art_url.startswith("http://"):
         return art_url
+    global last_image, last_image_url
+    if art_url.startswith("data:"):
+        if last_image == art_url:
+            return last_image_url
+        last_image = art_url
+        data_index = art_url.index(",")
+        mime, data_type = art_url[5:data_index].split(";")
+        data = art_url[data_index+1:]
+        if data_type == "base64":
+            data = base64.b64decode(data)
+        with open("/tmp/album-art.png", "wb") as file:
+            file.write(data)
+        last_image_url = upload_ipfs("/tmp/album-art.png")
+        return last_image_url
     if art_url.startswith("file://"):
-        global last_image, last_image_url
         if last_image == art_url:
             return last_image_url
         last_image_url = upload_ipfs(art_url[7:])
